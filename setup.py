@@ -1,11 +1,11 @@
 from setuptools import setup
 
 setup(
-    name='svg',
-    packages=['svg'],
+    name='svgast',
+    packages=['svgast'],
     decsription='Helpers for building SVG files in Python',
     keywords=['svg', 'xml'],
-    url='http://github.com/ch3pjw/concert_branding',
+    url='http://github.com/ch3pjw/concert_svgast',
     author='Paul Weaver',
     author_email='paul@ruthorn.co.uk',
     version='0.0.0',
