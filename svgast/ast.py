@@ -11,6 +11,9 @@ class Element:
     def __init__(self, *children, **attributes):
         self._children = children
         self._attributes = attributes
+        view_box = attributes.get('viewBox')
+        if view_box:
+            attributes['viewBox'] = ViewBox(*view_box)
 
     def __len__(self):
         return len(self._children)
@@ -92,7 +95,10 @@ class Symbol(Element):
 
 
 class Text(Element):
-    pass
+    def __init__(self, *children, dx=None, **attributes):
+        if dx:
+            attributes['dx'] = Kern(*dx)
+        super().__init__(*children, **attributes)
 
 
 class Use(Element):
