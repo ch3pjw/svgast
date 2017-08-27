@@ -70,7 +70,7 @@ class G(Element):
 
 class Path(Element):
     def __init__(self, *children, d, **attributes):
-        super().__init__(*children, d=PathD(d), **attributes)
+        super().__init__(*children, d=PathD(*d), **attributes)
 
 
 class Rect(Element):
@@ -157,12 +157,12 @@ for instruction in (MoveTo, LineTo, HorizontalLineTo, VerticalLineTo, ArcTo):
             wraps(instruction)(partial(instruction, rel=rel)))
 
 
-class PathD:
-    def __init__(self, inss):
-        self._inss = tuple(inss)
+class PathD(tuple):
+    def __new__(cls, *args):
+        return super().__new__(cls, args)
 
     def __str__(self):
-        return '  '.join(map(str, self._inss))
+        return '  '.join(map(str, self))
 
 
 ViewBox = namedtuple('ViewBox', ('ox', 'oy', 'width', 'height'))
