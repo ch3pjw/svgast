@@ -56,6 +56,10 @@ class Element:
         return e
 
 
+def to_etree(element):
+    return element._etree
+
+
 class Circle(Element):
     pass
 
