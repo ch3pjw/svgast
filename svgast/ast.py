@@ -1,4 +1,5 @@
 import sys
+import io
 from collections import namedtuple
 from functools import partial, wraps
 
@@ -58,6 +59,23 @@ class Element:
 
 def to_etree(element):
     return element._etree
+
+
+def write(svg_element, file_or_path):
+    if not isinstance(svg_element, Svg):
+        raise TypeError(
+            'Must use an Svg element as document root, got {!r}'.format(
+                type(svg_element)))
+    do_write = lambda f: etree.ElementTree(to_etree(svg_element)).write(
+        f, pretty_print=True, xml_declaration=True, encoding='utf-8')
+    if isinstance(file_or_path, io.IOBase):
+        do_write(file_or_path)
+    elif isinstance(file_or_path, str):
+        with open(file_or_path, 'wb') as f:
+            do_write(f)
+    else:
+        raise TypeError(
+            'Expected file or path, got {!r}'.format(type(file_or_path)))
 
 
 class Circle(Element):
