@@ -1,9 +1,10 @@
 import sys
-import io
 from collections import namedtuple
 from functools import partial, wraps
 
 from lxml import etree
+
+from .units import to_length, str_number
 
 _module = sys.modules[__name__]
 
@@ -124,10 +125,6 @@ class Use(Element):
     pass
 
 
-def _str_number(n):
-    return '{:f}'.format(n).rstrip('0').rstrip('.')
-
-
 def _str_ins(ins):
     if ins is z:
         return 'Z'
@@ -135,7 +132,7 @@ def _str_ins(ins):
         d = ins.__dict__
         rel = d.pop('rel')
         letter = ins.letter.lower() if rel else ins.letter.upper()
-        args = ' '.join(map(str, map(_str_number, d.values())))
+        args = ' '.join(map(str, map(str_number, d.values())))
         return '{} {}'.format(letter, args)
 
 
@@ -184,13 +181,17 @@ class PathD(tuple):
         return '  '.join(map(str, self))
 
 
-ViewBox = namedtuple('ViewBox', ('ox', 'oy', 'width', 'height'))
-ViewBox.__str__ = lambda vb: ' '.join(map(str, vb))
+class ViewBox(namedtuple('ViewBox', ('ox', 'oy', 'width', 'height'))):
+    def __new__(cls, *args):
+        return super().__new__(cls, *map(to_length, args))
+
+    def __str__(self):
+        return ' '.join(map(str, self))
 
 
 class Kern(tuple):
     def __new__(cls, *args):
-        return super().__new__(cls, args)
+        return super().__new__(cls, *map(to_length, args))
 
     def __str__(self):
-        return ' '.join(map(_str_number, self))
+        return ' '.join(map(str, self))
