@@ -57,6 +57,31 @@ class Element:
                 e.append(last_child_etree_elem)
         return e
 
+    # FIXME: these as functions rather than properties? e.e. left(Circle(...))
+    @property
+    def left(self):
+        raise NotImplementedError()
+
+    @property
+    def right(self):
+        raise NotImplementedError()
+
+    @property
+    def top(self):
+        raise NotImplementedError()
+
+    @property
+    def bottom(self):
+        raise NotImplementedError()
+
+    @property
+    def hmiddle(self):
+        raise NotImplementedError()
+
+    @property
+    def vmiddle(self):
+        raise NotImplementedError()
+
 
 def to_etree(element):
     return element._etree
@@ -77,7 +102,32 @@ def write(svg_element, file_or_path):
 
 
 class Circle(Element):
-    pass
+    def __init__(self, cx, cy, r, **attributes):
+        super().__init__(cx=cx, cy=cy, r=r, **attributes)
+
+    @property
+    def left(self):
+        return self.cx - self.r
+
+    @property
+    def right(self):
+        return self.cx + self.r
+
+    @property
+    def top(self):
+        return self.cy - self.r
+
+    @property
+    def bottom(self):
+        return self.cy + self.r
+
+    @property
+    def hmiddle(self):
+        return self.cx
+
+    @property
+    def vmiddle(self):
+        return self.cy
 
 
 class Defs(Element):
@@ -94,7 +144,9 @@ class Path(Element):
 
 
 class Rect(Element):
-    pass
+    def __init__(self, x, y, width, height, **attributes):
+        # Attributes can have rx, ry for corner radii
+        super().__init__(x=x, y=y, width=width, height=height, **attributes)
 
 
 class Style(Element):
@@ -131,23 +183,31 @@ class _PathInstructionMeta(type):
             metacls, name,
             (
                 namedtuple(name, cls_dict.get('_fields', ()) + ('rel',)),
-            ) + bases,
+            ),
             cls_dict)
         if cls._letter:
             setattr(
                 _module,
                 cls._letter.lower(),
-                wraps(cls)(lambda *a: cls(*a, rel=True)))
+                # wraps(cls)(lambda *a: cls(*a, rel=True)))
+                wraps(cls)(lambda *a: None))
             setattr(
                 _module,
                 cls._letter.upper(),
-                wraps(cls)(lambda *a: cls(*a, rel=False)))
+                # wraps(cls)(lambda *a: cls(*a, rel=False)))
+                wraps(cls)(lambda *a: None))
         return cls
 
 
 class PathInstruction(metaclass=_PathInstructionMeta):
     _letter = None
     _fields = ()
+
+    def __new__(cls, *args, rel):
+        import inspect
+        print(inspect.getfullargspec(super().__new__))
+        raise Poop
+        return super().__new__(cls, *args, rel=rel)
 
     @property
     def letter(self):
@@ -221,10 +281,26 @@ class ClosePath(PathInstruction):
 
 class PathD(tuple):
     def __new__(cls, *args):
-        return super().__new__(cls, args)
+        # FIXME: how should adding together paths work?
+        # if args and isinstance(args[-1], ClosePath):
+        #     closed = True
+        #     args = args[:-1]
+        # else:
+        #     closed = False
+        tup = super().__new__(cls, args)
+        # tup.closed = closed
+        return tup
 
     def __str__(self):
         return '  '.join(map(str, self))
+
+    def bounding_box(self):
+        min_x = None
+        max_x = None
+        min_y = None
+        max_y = None
+        for ins in self:
+            pass
 
 
 class ViewBox(namedtuple('ViewBox', ('ox', 'oy', 'width', 'height'))):
