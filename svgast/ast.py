@@ -1,6 +1,6 @@
 import sys
 from collections import namedtuple
-from functools import partial, wraps
+from functools import wraps
 
 from lxml import etree
 
@@ -125,52 +125,98 @@ class Use(Element):
     pass
 
 
-def _str_ins(ins):
-    if ins is z:
-        return 'Z'
-    else:
-        d = ins.__dict__
-        rel = d.pop('rel')
-        letter = ins.letter.lower() if rel else ins.letter.upper()
-        args = ' '.join(map(str, map(str_number, d.values())))
-        return '{} {}'.format(letter, args)
+class _PathInstructionMeta(type):
+    def __new__(metacls, name, bases, cls_dict):
+        cls = super().__new__(
+            metacls, name,
+            (
+                namedtuple(name, cls_dict.get('_fields', ()) + ('rel',)),
+            ) + bases,
+            cls_dict)
+        if cls._letter:
+            setattr(
+                _module,
+                cls._letter.lower(),
+                wraps(cls)(lambda *a: cls(*a, rel=True)))
+            setattr(
+                _module,
+                cls._letter.upper(),
+                wraps(cls)(lambda *a: cls(*a, rel=False)))
+        return cls
 
 
-MoveTo = namedtuple('MoveTo', ('x', 'y', 'rel'))
-MoveTo.letter = 'm'
-MoveTo.__str__ = _str_ins
+class PathInstruction(metaclass=_PathInstructionMeta):
+    _letter = None
+    _fields = ()
 
-LineTo = namedtuple('LineTo', ('x', 'y', 'rel'))
-LineTo.letter = 'l'
-LineTo.__str__ = _str_ins
+    @property
+    def letter(self):
+        return self._letter.lower() if self.rel else self._letter.upper()
 
-HorizontalLineTo = namedtuple('HorizontalLineTo', ('x', 'rel'))
-HorizontalLineTo.letter = 'h'
-HorizontalLineTo.__str__ = _str_ins
+    @property
+    def args(self):
+        return self[:-1]
 
-VerticalLineTo = namedtuple('VerticalLineTo', ('y', 'rel'))
-VerticalLineTo.letter = 'v'
-VerticalLineTo.__str__ = _str_ins
+    @property
+    def rel(self):
+        return self[-1]
 
-ArcTo = namedtuple(
-    'ArcTo', ('rx', 'ry', 'x_axis_rotate', 'large', 'sweep', 'x', 'y', 'rel'))
-ArcTo.letter = 'a'
-ArcTo.__str__ = _str_ins
+    def __str__(self):
+        return '{} {}'.format(
+            self.letter,
+            ' '.join(map(str_number, self.args)))
 
-ClosePath = namedtuple('ClosePath', ())
-ClosePath.letter = 'z'
-ClosePath.__str__ = lambda _: 'Z'
-ClosePath.__call__ = lambda: z
-z = ClosePath()
-Z = z
+    def __repr__(self):
+        return '{}({})'.format(
+            self.letter,
+            ', '.join(map(str_number, self.args)))
 
 
-for instruction in (MoveTo, LineTo, HorizontalLineTo, VerticalLineTo, ArcTo):
-    for rel, str_f in ((True, str.lower), (False, str.upper)):
-        setattr(
-            _module,
-            str_f(instruction.letter),
-            wraps(instruction)(partial(instruction, rel=rel)))
+class MoveTo(PathInstruction):
+    '''
+    FIXME: docstring
+    '''
+    _letter = 'm'
+    _fields = 'x', 'y'
+
+
+class LineTo(PathInstruction):
+    '''
+    FIXME: docstring
+    '''
+    _letter = 'l'
+    _fields = 'x', 'y'
+
+
+class HorizontalLineTo(PathInstruction):
+    '''
+    FIXME: docstring
+    '''
+    _letter = 'h'
+    _fields = 'x',
+
+
+class VerticalLineTo(PathInstruction):
+    '''
+    FIXME: docstring
+    '''
+    _letter = 'v'
+    _fields = 'y',
+
+
+class ArcTo(PathInstruction):
+    '''
+    FIXME: docstring
+    '''
+    _letter = 'a'
+    _fields = 'rx', 'ry', 'x_axis_rotate', 'large', 'sweep', 'x', 'y'
+
+
+class ClosePath(PathInstruction):
+    _letter = 'z'
+
+    def __str__(self):
+        return self.letter
 
 
 class PathD(tuple):
