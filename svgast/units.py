@@ -22,6 +22,66 @@ class Length:
             str_number(self.px / self._px_per_unit),
             self.unit)
 
+    def __abs__(self):
+        return self.px
+
+    def __add__(self, other):
+        if isinstance(other, Length):
+            px = self.px + other.px
+        else:
+            px = self.px + other
+        l = user(px)
+        if type(self) is type(other):
+            return type(self)(l)
+        else:
+            return l
+
+    def __radd__(self, other):
+        assert not isinstance(other, Length)
+        return user(other + self.px)
+
+    def __sub__(self, other):
+        if isinstance(other, Length):
+            px = self.px - other.px
+        else:
+            px = self.px - other
+        l = user(px)
+        if type(self) is type(other):
+            return type(self)(l)
+        else:
+            return l
+
+    def __rsub__(self, other):
+        assert not isinstance(other, Length)
+        return user(other - self.px)
+
+    def __mul__(self, other):
+        if isinstance(other, Complex):
+            return type(self)(user(self.px * other))
+        else:
+            raise TypeError()
+
+    def __rmul__(self, other):
+        if isinstance(other, Complex):
+            return type(self)(user(other * self.px))
+        else:
+            raise TypeError()
+
+    def __truediv__(self, other):
+        if isinstance(other, Length):
+            return user(self.px / other.px)
+        else:
+            return type(self)(user(self.px / other))
+
+    def __neg__(self):
+        return type(self)(user(-self.px))
+
+    def __eq__(self, other):
+        if isinstance(other, Length):
+            return self.px == other.px
+        else:
+            return self.px == other
+
 
 class user(Length):
     unit = ''

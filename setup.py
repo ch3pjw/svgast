@@ -12,5 +12,8 @@ setup(
     license='',
     install_requires=[
         'lxml'
-    ]
+    ],
+    extras_require={
+        'test': ['pytest']
+    }
 )
