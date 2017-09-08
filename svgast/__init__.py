@@ -1,3 +1,6 @@
+# flake8: noqa
+# FIXME: ideally just ignore F401
+
 from .ast import (
     Circle, Defs, G, Path, Rect, Style, Svg, Symbol, Text, Use,
     m, l, h, v, a, z,
