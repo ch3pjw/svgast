@@ -1,4 +1,4 @@
-from numbers import Complex
+from numbers import Number
 
 
 class Length:
@@ -10,7 +10,7 @@ class Length:
     def __init__(self, length):
         if isinstance(length, Length):
             self.px = length.px
-        elif isinstance(length, Complex):
+        elif isinstance(length, Number):
             # Any numerical value:
             self.px = length * self._px_per_unit
         else:
@@ -56,13 +56,13 @@ class Length:
         return user(other - self.px)
 
     def __mul__(self, other):
-        if isinstance(other, Complex):
+        if isinstance(other, Number):
             return type(self)(user(self.px * other))
         else:
             raise TypeError()
 
     def __rmul__(self, other):
-        if isinstance(other, Complex):
+        if isinstance(other, Number):
             return type(self)(user(other * self.px))
         else:
             raise TypeError()
