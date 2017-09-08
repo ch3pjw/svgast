@@ -1,8 +1,10 @@
 import sys
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from functools import partial, wraps
 
 from lxml import etree
+from pyrsistent import PClass, field
+from pyrsistent._pclass import PClassMeta
 
 from .units import to_length, str_number
 
@@ -125,51 +127,92 @@ class Use(Element):
     pass
 
 
-def _str_ins(ins):
-    if ins is z:
-        return 'Z'
-    else:
-        d = ins.__dict__
-        rel = d.pop('rel')
-        letter = ins.letter.lower() if rel else ins.letter.upper()
-        args = ' '.join(map(str, map(str_number, d.values())))
-        return '{} {}'.format(letter, args)
+class OrderedPClassMeta(PClassMeta):
+    def __init__(cls, name, bases, cls_dict):
+        super().__init__(name, bases, cls_dict)
+
+    def __prepare__(name, bases, **kwargs):
+        return OrderedDict()
 
 
-MoveTo = namedtuple('MoveTo', ('x', 'y', 'rel'))
-MoveTo.letter = 'm'
-MoveTo.__str__ = _str_ins
+class ArgsPClass(PClass, metaclass=OrderedPClassMeta):
+    def __new__(cls, *args, **kwargs):
+        kwargs.update(zip(cls._fields(), args))
+        return super().__new__(cls, **kwargs)
 
-LineTo = namedtuple('LineTo', ('x', 'y', 'rel'))
-LineTo.letter = 'l'
-LineTo.__str__ = _str_ins
-
-HorizontalLineTo = namedtuple('HorizontalLineTo', ('x', 'rel'))
-HorizontalLineTo.letter = 'h'
-HorizontalLineTo.__str__ = _str_ins
-
-VerticalLineTo = namedtuple('VerticalLineTo', ('y', 'rel'))
-VerticalLineTo.letter = 'v'
-VerticalLineTo.__str__ = _str_ins
-
-ArcTo = namedtuple(
-    'ArcTo', ('rx', 'ry', 'x_axis_rotate', 'large', 'sweep', 'x', 'y', 'rel'))
-ArcTo.letter = 'a'
-ArcTo.__str__ = _str_ins
-
-ClosePath = namedtuple('ClosePath', ())
-ClosePath.letter = 'z'
-ClosePath.__str__ = lambda _: 'Z'
-ClosePath.__call__ = lambda: z
-z = ClosePath()
-Z = z
+    @classmethod
+    def _fields(cls):
+        return cls.__slots__[1:]
 
 
-for instruction in (MoveTo, LineTo, HorizontalLineTo, VerticalLineTo, ArcTo):
+class PathInstruction(ArgsPClass):
+    rel = field(mandatory=True)
+    _letter = None
+
+    @classmethod
+    def _fields(cls):
+        print(cls.__slots__)
+        return cls.__slots__[2:]  # Exlude 'rel' from *args
+
+    @property
+    def letter(self):
+        return self._letter.lower() if self.rel else self._letter.upper()
+
+    @property
+    def _args(self):
+        return tuple(getattr(self, f) for f in self._fields())
+
+    def __str__(self):
+        arg_string = ' '.join(map(str_number, self._args))
+        if arg_string:
+            return '{} {}'.format(self.letter, arg_string)
+        else:
+            return self.letter
+
+
+class MoveTo(PathInstruction):
+    _letter = 'm'
+    x = field(mandatory=True)
+    y = field(mandatory=True)
+
+
+class LineTo(PathInstruction):
+    _letter = 'l'
+    x = field(mandatory=True)
+    y = field(mandatory=True)
+
+
+class HorizontalLineTo(PathInstruction):
+    _letter = 'h'
+    x = field(mandatory=True)
+
+
+class VerticalLineTo(PathInstruction):
+    _letter = 'v'
+    y = field(mandatory=True)
+
+
+class ArcTo(PathInstruction):
+    _letter = 'a'
+    rx = field(mandatory=True)
+    ry = field(mandatory=True)
+    x_axis_rotation = field(mandatory=True)
+    large = field(mandatory=True)
+    sweep = field(mandatory=True)
+    x = field(mandatory=True)
+    y = field(mandatory=True)
+
+
+class ClosePath(PathInstruction):
+    _letter = 'z'
+
+
+for instruction in (
+        MoveTo, LineTo, HorizontalLineTo, VerticalLineTo, ArcTo, ClosePath):
     for rel, str_f in ((True, str.lower), (False, str.upper)):
         setattr(
             _module,
-            str_f(instruction.letter),
+            str_f(instruction._letter),
             wraps(instruction)(partial(instruction, rel=rel)))
 
 
