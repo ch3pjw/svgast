@@ -9,3 +9,4 @@ install:
  - "pip install -e .[test]"
 script:
  - "flake8 ."
+ - "py.test"  # the dot is for 3.3 compatibility
