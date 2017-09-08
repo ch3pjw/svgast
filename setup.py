@@ -1,8 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+
+print('loop', find_packages('src'))
 
 setup(
     name='svgast',
-    packages=['svgast'],
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
     decsription='Helpers for building SVG files in Python',
     keywords=['svg', 'xml'],
     url='http://github.com/concert/svgast',
