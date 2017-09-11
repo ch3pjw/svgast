@@ -27,7 +27,10 @@ class Element:
         return self._children[idx]
 
     def __getattr__(self, name):
-        return self._attributes[name]
+        try:
+            return self._attributes[name]
+        except KeyError as e:
+            raise AttributeError(name) from e
 
     @property
     def _tag(self):
