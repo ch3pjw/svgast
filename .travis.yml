@@ -9,4 +9,5 @@ install:
  - "pip install -e .[test]"
 script:
  - "flake8 ."
- - "py.test"  # the dot is for 3.3 compatibility
+   # the dot for pytest is for 3.3 compatibility:
+ - "py.test --cov=svgast --cov-report=term-missing --cov-branch"

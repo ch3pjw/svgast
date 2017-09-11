@@ -15,6 +15,6 @@ setup(
         'lxml'
     ],
     extras_require={
-        'test': ['flake8', 'pytest']
+        'test': ['flake8', 'pytest', 'pytest-cov']
     }
 )
